@@ -13,7 +13,6 @@
 @interface TableViewController ()
 
 @property (strong, nonatomic) NSMutableArray *images;
-
 @property (strong, nonatomic) NSMutableArray<NSNumber *> *progress;
 
 @end
@@ -21,7 +20,6 @@
 @implementation TableViewController
 
 - (void)viewDidLoad {
-    
     [super viewDidLoad];
     
     ImageHandler *imageHandler = [ImageHandler shared];
@@ -37,12 +35,10 @@
 }
 
 - (ViewController *)parentController {
-    
     return (ViewController *)self.parentViewController;
 }
 
 - (void)didReceiveMemoryWarning {
-    
     [super didReceiveMemoryWarning];
     
     [self.images removeAllObjects];
@@ -52,24 +48,20 @@
 #pragma mark - Table view data source
 
 - (NSInteger)tableView:(UITableView *)tableView numberOfRowsInSection:(NSInteger)section {
-    
     return self.images.count;
 }
 
 - (UITableViewCell *)tableView:(UITableView *)tableView cellForRowAtIndexPath:(NSIndexPath *)indexPath {
-    
     ImageCell *cell =
     [tableView dequeueReusableCellWithIdentifier:NSStringFromClass([ImageCell class])
                                     forIndexPath:indexPath];
     
     if ([self.images[indexPath.row] isKindOfClass:[NSNull class]]) {
-        
         cell.processedImageView.image = nil;
         cell.progressView.hidden = NO;
         [cell.progressView setProgress:[self.progress[indexPath.row] floatValue] animated:NO];
         
     } else {
-        
         cell.progressView.hidden = YES;
         cell.processedImageView.image = self.images[indexPath.row];
         
@@ -87,40 +79,33 @@
     return ![self.images[indexPath.row] isKindOfClass:[NSNull class]];
 }
 
-- (NSArray<UITableViewRowAction *> *)tableView:(UITableView *)tableView editActionsForRowAtIndexPath:(NSIndexPath *)indexPath {
-    
-    UITableViewRowAction *deleteAction =
-    [UITableViewRowAction rowActionWithStyle:UITableViewRowActionStyleDefault
-                                       title:@"Delete"
-                                     handler:^(UITableViewRowAction *action, NSIndexPath *indexPath) {
-                                         
-                                         [self.images removeObjectAtIndex:indexPath.row];
-                                         [self.progress removeObjectAtIndex:indexPath.row];
-                                         [tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
-                                     }];
-    deleteAction.backgroundColor = [UIColor redColor];
-    
-    UITableViewRowAction *saveAction =
-    [UITableViewRowAction rowActionWithStyle:UITableViewRowActionStyleDefault
-                                       title:@"Save"
-                                     handler:^(UITableViewRowAction *action, NSIndexPath *indexPath) {
-                                         
-                                         UIImage *image = self.images[indexPath.row];
-                                         
-                                         [self.parentController saveAssetToAlbum:image];
-                                     }];
-    saveAction.backgroundColor = [UIColor blueColor];
-    
-    UITableViewRowAction *setAsSourceAction =
-    [UITableViewRowAction rowActionWithStyle:UITableViewRowActionStyleDefault
-                                       title:@"Set as source"
-                                     handler:^(UITableViewRowAction *action, NSIndexPath *indexPath) {
-                                         
-                                         [self.parentController setImageAsSource:self.images[indexPath.row]];
-                                     }];
-    setAsSourceAction.backgroundColor = [UIColor grayColor];
-    
-    return @[deleteAction, saveAction, setAsSourceAction];
+- (UISwipeActionsConfiguration *)tableView:(UITableView *)tableView trailingSwipeActionsConfigurationForRowAtIndexPath:(NSIndexPath *)indexPath {
+    __auto_type actions = @[
+        [UIContextualAction contextualActionWithStyle:UIContextualActionStyleDestructive
+                                                title:@"Delete"
+                                              handler:^(UIContextualAction * _Nonnull action, __kindof UIView * _Nonnull sourceView, void (^ _Nonnull completionHandler)(BOOL)) {
+            completionHandler(false);
+            [self.images removeObjectAtIndex:indexPath.row];
+            [self.progress removeObjectAtIndex:indexPath.row];
+            [tableView deleteRowsAtIndexPaths:@[indexPath] withRowAnimation:UITableViewRowAnimationAutomatic];
+        }],
+        
+        [UIContextualAction contextualActionWithStyle:UIContextualActionStyleNormal
+                                                title:@"Save"
+                                              handler:^(UIContextualAction * _Nonnull action, __kindof UIView * _Nonnull sourceView, void (^ _Nonnull completionHandler)(BOOL)) {
+            completionHandler(false);
+            UIImage *image = self.images[indexPath.row];
+            [self.parentController saveAssetToAlbum:image];
+        }],
+        
+        [UIContextualAction contextualActionWithStyle:UIContextualActionStyleNormal
+                                                title:@"Set as source"
+                                              handler:^(UIContextualAction * _Nonnull action, __kindof UIView * _Nonnull sourceView, void (^ _Nonnull completionHandler)(BOOL)) {
+            completionHandler(false);
+            [self.parentController setImageAsSource:self.images[indexPath.row]];
+        }],
+    ];
+    return [UISwipeActionsConfiguration configurationWithActions:actions];
 }
 
 - (void)tableView:(UITableView *)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath *)indexPath {
@@ -141,21 +126,17 @@
 }
 
 - (void)imageHandler:(ImageHandler *)imageHandler didAchieveProgress:(float)progress withTag:(NSInteger)tag {
-    
     NSInteger i = self.images.count - 1 - tag;
     
     self.progress[i] = @(progress);
-    
     ImageCell *cell = [self.tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:i inSection:0]];
     
     if (cell) {
-        
         [cell.progressView setProgress:progress animated:NO];
     }
 }
 
 - (void)imageHandler:(ImageHandler *)imageHandler didFinishWithImage:(UIImage *)image tag:(NSInteger)tag {
-    
     NSInteger i = self.images.count - 1 - tag;
     
     self.images[i] = image;
@@ -164,7 +145,6 @@
     ImageCell *cell = [self.tableView cellForRowAtIndexPath:[NSIndexPath indexPathForRow:i inSection:0]];
     
     if (cell) {
-        
         cell.progressView.hidden = YES;
         cell.processedImageView.image = image;
     }
